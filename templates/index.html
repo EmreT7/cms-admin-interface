@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="search-bar">
+    <input type="text" id="search-input" placeholder="Search words...">
+    <button id="search-button">Search</button>
+</div>
+
+<div id="word-list">
+    {% for word in words %}
+    <div class="word-item" data-id="{{ word.id }}">
+        <h2>{{ word.wordFirstLang }} - {{ word.wordSecondLang }}</h2>
+        <p>{{ word.sentenceFirstLang }}</p>
+        <p>{{ word.sentenceSecondLang }}</p>
+        <button class="edit-button">Edit</button>
+        <div class="edit-form" style="display: none;">
+            <input type="text" class="wordFirstLang" value="{{ word.wordFirstLang }}">
+            <input type="text" class="wordSecondLang" value="{{ word.wordSecondLang }}">
+            <textarea class="sentenceFirstLang">{{ word.sentenceFirstLang }}</textarea>
+            <textarea class="sentenceSecondLang">{{ word.sentenceSecondLang }}</textarea>
+            <button class="save-button">Save</button>
+            <button class="cancel-button">Cancel</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+<div class="pagination">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('index', page=pagination.prev_num) }}">&laquo; Previous</a>
+    {% endif %}
+    {% for page in pagination.iter_pages() %}
+        {% if page %}
+            {% if page != pagination.page %}
+                <a href="{{ url_for('index', page=page) }}">{{ page }}</a>
+            {% else %}
+                <strong>{{ page }}</strong>
+            {% endif %}
+        {% else %}
+            <span>...</span>
+        {% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+        <a href="{{ url_for('index', page=pagination.next_num) }}">Next &raquo;</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('.edit-button').click(function() {
+        $(this).siblings('.edit-form').show();
+        $(this).hide();
+    });
+
+    $('.cancel-button').click(function() {
+        $(this).parent().hide();
+        $(this).parent().siblings('.edit-button').show();
+    });
+
+    $('.save-button').click(function() {
+        var wordItem = $(this).closest('.word-item');
+        var id = wordItem.data('id');
+        var data = {
+            id: id,
+            wordFirstLang: wordItem.find('.wordFirstLang').val(),
+            wordSecondLang: wordItem.find('.wordSecondLang').val(),
+            sentenceFirstLang: wordItem.find('.sentenceFirstLang').val(),
+            sentenceSecondLang: wordItem.find('.sentenceSecondLang').val()
+        };
+
+        $.ajax({
+            url: '/update',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                if (response.success) {
+                    wordItem.find('h2').text(data.wordFirstLang + ' - ' + data.wordSecondLang);
+                    wordItem.find('p').eq(0).text(data.sentenceFirstLang);
+                    wordItem.find('p').eq(1).text(data.sentenceSecondLang);
+                    wordItem.find('.edit-form').hide();
+                    wordItem.find('.edit-button').show();
+                } else {
+                    alert('Failed to update word');
+                }
+            },
+            error: function() {
+                alert('An error occurred while updating the word');
+            }
+        });
+    });
+
+    $('#search-button').click(function() {
+        var query = $('#search-input').val();
+        $.get('/search', { query: query }, function(data) {
+            $('#word-list').empty();
+            data.forEach(function(word) {
+                var wordItem = $('<div class="word-item" data-id="' + word.id + '">');
+                wordItem.append('<h2>' + word.wordFirstLang + ' - ' + word.wordSecondLang + '</h2>');
+                wordItem.append('<p>' + word.sentenceFirstLang + '</p>');
+                wordItem.append('<p>' + word.sentenceSecondLang + '</p>');
+                wordItem.append('<button class="edit-button">Edit</button>');
+                var editForm = $('<div class="edit-form" style="display: none;">');
+                editForm.append('<input type="text" class="wordFirstLang" value="' + word.wordFirstLang + '">');
+                editForm.append('<input type="text" class="wordSecondLang" value="' + word.wordSecondLang + '">');
+                editForm.append('<textarea class="sentenceFirstLang">' + word.sentenceFirstLang + '</textarea>');
+                editForm.append('<textarea class="sentenceSecondLang">' + word.sentenceSecondLang + '</textarea>');
+                editForm.append('<button class="save-button">Save</button>');
+                editForm.append('<button class="cancel-button">Cancel</button>');
+                wordItem.append(editForm);
+                $('#word-list').append(wordItem);
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
+
