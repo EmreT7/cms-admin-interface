@@ -46,7 +46,7 @@ This project is a simple Content Management System (CMS) for managing words and 
    python app.py
    ```
 
-2. Open your web browser and navigate to `http://localhost:5000`
+2. Open your web browser and navigate to `http://localhost:5000` or '`http://127.0.0.1:5000`
 
 3. You should now see the CMS admin interface with the list of words and phrases loaded from the initial data.
 
