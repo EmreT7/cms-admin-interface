@@ -9,6 +9,7 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 
 class Word(db.Model):
+    __tablename__ = 'words'
     id = db.Column(db.Integer, primary_key=True)
     wordFirstLang = db.Column(db.String(100), nullable=False)
     sentenceFirstLang = db.Column(db.String(500))
